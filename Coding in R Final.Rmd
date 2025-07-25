@@ -1,0 +1,134 @@
+---
+title: "Coding in R Final"
+author: "Nate Bonetto"
+date: "2025-07-25"
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(readr)
+library(rmarkdown)
+library(dplyr)
+library(tidyverse)
+library(knitr)
+```
+
+**Github:** [github.com/natebonetto](https://github.com/natebonetto)
+
+**Github Repo** []()
+
+## Abstract
+
+The data for this report was obtained from [FiveThirtyEight](https://github.com/fivethirtyeight/data/tree/master/college-majors). This report investigates the effect of college major selection on income and employment outcomes among recent graduates. Using the FiveThirtyEight *Recent Graduates* dataset, the project explores relationships between earnings, gender, unemployment rates, and major categories.
+
+**Citations**:  
+- FiveThirtyEight Dataset  
+- Berger, M.C. (1988). *Predicted Future Earnings and Choice of College Major.*
+
+\newpage
+
+
+## Background
+
+As I approach graduation from my Master’s in Economics, I’ve found it surprisingly difficult to secure employment. This personal challenge has motivated me to investigate whether my difficulty is unique, or if certain college majors more broadly face tougher employment outcomes than others.
+
+This project also serves as a way to build my skills in data science using R, particularly in cleaning, visualizing, and modeling real-world data. It’s a practical application of both my economics training and the R programming skills I’ve developed throughout this course.
+
+Several studies have examined labor market outcomes by field of study. For example, Webber (2014) found significant variation in earnings by major, and argued that students should weigh expected income heavily when selecting a field. Similarly, Carnevale et al. (2015) from Georgetown University’s Center on Education and the Workforce have published extensive reports ranking majors by salary and employment outcomes.
+
+**References**
+
+Webber, D. A. (2014). "Are college costs worth it? How ability, major, and debt affect the returns to schooling." Economics of Education Review, 43, 1–15.
+
+Carnevale, A. P., Cheah, B., & Hanson, A. R. (2015). The Economic Value of College Majors. Georgetown University Center on Education and the Workforce.
+
+## Midterm Review
+
+
+## Data
+
+### Summary Statistics
+```{r, import datasets, echo=FALSE}
+recent_grads <- read_csv("Dropbox/GT Spring 2025/Coding in R/Data/Raw/recent-grads.csv", show_col_types = FALSE)
+```
+
+```{r, cleaning}
+recent_clean <- recent_grads |> drop_na()
+
+```
+
+I wanted to get a reference for a few summary statistics, so I could compare individual major categories to the means. I wanted to know average wage across all majors, average unemployment rate, the ratio of low wage jobs to total jobs, and the ratio of jobs being done that didn't rewuire a college degree.
+
+```{r, summary stats}
+summary_stats <- recent_clean |>
+  summarise(
+    avg_median_income = mean(Median, na.rm = TRUE),
+    avg_unemployment_rate = mean(Unemployment_rate, na.rm = TRUE),
+    low_wage_job_ratio = sum(Low_wage_jobs, na.rm = TRUE) / sum(Employed, na.rm = TRUE),
+    college_deg_ratio = sum(Non_college_jobs, na.rm = TRUE) / sum(Employed, na.rm = TRUE)
+  )
+print(summary_stats)
+```
+
+
+I then wanted to get some more individual statistics so I could determine which majors had the highest income and lowest unemployment rates.
+
+```{r, best majors}
+recent_clean |>
+  select(Major, Median) %>%
+  arrange(desc(Median)) %>%
+  head(10) %>%
+  knitr::kable(caption = "Top 10 Majors by Median Income")
+
+recent_clean |>
+  select(Major, Unemployment_rate) %>%
+  arrange(Unemployment_rate) %>%
+  head(10) %>%
+  knitr::kable(caption = "Top 10 Majors by Lowest Unemployment Rate")
+
+```
+
+### Regression
+
+I then wanted to see if I could answer my question, does a recent graduates major effect their income and employment outcomes. I produced a few regression models to answer this, as seen below. 
+
+```{r, regression-1, echo=TRUE}
+linear_model <- lm(Median ~ Major_category, data = recent_clean)
+summary(linear_model)
+
+linear_model_ue <- lm(Unemployment_rate ~ Major_category, data = recent_clean)
+summary(linear_model_ue)
+```
+
+##Visualizations
+
+```{r}
+recent_clean |>
+  group_by(Major_category) |>
+  summarise(mean_income = mean(Median)) |>
+  ggplot(aes(x = reorder(Major_category, mean_income), y = mean_income)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Average Median Income by Major Category",
+       x = "Major Category", y = "Median Income ($)")
+```
+
+
+
+## Conclusion
+
+There appeared to be no **strong** correlation between major category and income or unemployment rate, as few of the outputs indicated significance. However, we can see that compared to our control variable *Agriculture and Natural Resources*, *Engineering*, *Computer Science and Mathematics*, and *Business* all had significantly higher incomes.
+
+We see a similar trend in unemployment rate, where there appears to be no strong correlation between major and unemployment rate other than in *Social Science* and *Arts*, which both have high unemployment rates. 
+
+
+
+
+
+
+
